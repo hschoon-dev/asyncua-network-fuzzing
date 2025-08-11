@@ -1,18 +1,53 @@
 import pyshark
 import sys
+import argparse
 from pathlib import Path
-import re
+#import re
 
 sys.path.insert(0, "..")
 script_base = Path(__file__).parent
-capture_file = Path(script_base / "asyncua_captures.pcapng")
+
+# Parse command line arguments
+parser = argparse.ArgumentParser(description='Convert pcapng captures to text files with OPC UA messages')
+parser.add_argument('capture_file', nargs='?', help='Path to the pcapng capture file')
+parser.add_argument('output_file', nargs='?', help='Path to the output text file')
+args = parser.parse_args()
+
+# Check if required arguments are provided
+if not args.capture_file or not args.output_file:
+    parser.print_usage()
+    print("\nError: Both capture_file and output_file arguments are required")
+    print("Convert pcapng captures to text files with OPC UA messages")
+    print("\npositional arguments:")
+    print("         capture_file  Path to the pcapng capture file")
+    print("         output_file   Path to the output text file\n")
+    print("Example: python pyshark-convert-captures.py capture.pcapng output.txt")
+    sys.exit(1)
+
+# Use provided file paths
+# If the capture file path is not absolute, assume it's relative to the script directory
+if not Path(args.capture_file).is_absolute():
+    capture_file = script_base / args.capture_file
+else:
+    capture_file = Path(args.capture_file)
+
+# For output file, also handle relative paths
+if not Path(args.output_file).is_absolute():
+    output_file = script_base / args.output_file
+else:
+    output_file = Path(args.output_file)
+
+# Check if capture file exists
+if not capture_file.exists():
+    print(f"Error: Capture file '{capture_file}' does not exist")
+    sys.exit(1)
 
 # First, check if any OPC UA packets exist
 capture = pyshark.FileCapture(str(capture_file), display_filter='opcua')
 packet_count = 0
 
 # Save the first readable text segment and raw bytes to a file
-def save_readable_text_with_raw_bytes(binary_data, filename="opcua_messages.txt"):
+def save_readable_text_with_raw_bytes(binary_data, filename):
     """Save the first readable text segment with the raw bytes to a text file."""
     readable_text, _ = extract_readable_text(binary_data)
     
@@ -24,15 +59,11 @@ def save_readable_text_with_raw_bytes(binary_data, filename="opcua_messages.txt"
         # Create the formatted entry
         entry = f"'{first_readable}' : {raw_bytes_str}\n"
         
-        # Get the script's directory and create the file path relative to it
-        script_dir = Path(__file__).parent
-        output_path = script_dir / filename
-        
         # Write to file (append mode)
-        with open(output_path, 'a') as f:
+        with open(filename, 'a') as f:
             f.write(entry)
         
-        print(f"Saved entry to {output_path}:")
+        print(f"Saved entry to {filename}:")
         print(entry)
         return True
     else:
@@ -40,7 +71,6 @@ def save_readable_text_with_raw_bytes(binary_data, filename="opcua_messages.txt"
         return False
 
 # Save the demonstration data
-output_file = "opcua_messages.txt"
 
 def extract_readable_text(binary_data):
     """Extract all readable ASCII text from binary data."""
@@ -127,6 +157,7 @@ def extract_readable_from_hex_string(hex_string):
     return extract_readable_text(binary_data)[0]
 
 print(f"Analyzing capture file: {capture_file}")
+print(f"Output will be saved to: {output_file}")
 
 # Let's look at packet types
 for i, packet in enumerate(capture):
@@ -136,10 +167,10 @@ for i, packet in enumerate(capture):
     
     if hasattr(packet, 'data') and hasattr(packet.data, 'data'):
         raw_data = bytes.fromhex(packet.data.data.replace(':', ''))
-        save_readable_text_with_raw_bytes(raw_data, output_file)
+        save_readable_text_with_raw_bytes(raw_data, str(output_file))
     elif hasattr(packet, 'tcp') and hasattr(packet.tcp, 'payload'):
         raw_data = bytes.fromhex(packet.tcp.payload.replace(':', ''))
-        save_readable_text_with_raw_bytes(raw_data, output_file)
+        save_readable_text_with_raw_bytes(raw_data, str(output_file))
 
     # Try to find OPC UA data in different layers
     if hasattr(packet, 'opcua'):
@@ -187,11 +218,11 @@ if packet_count == 0:
     print("\nTry using a more general filter like 'tcp.port==4840' (standard OPC UA port)")
 
 # Demonstration with a known OPC UA message
-print("\n\nDemonstration with known OPC UA message:")
-test_data = b'OPNF\x84\x00\x00\x00\x00\x00\x00\x00/\x00\x00\x00http://opcfoundation.org/UA/SecurityPolicy#None\xff\xff\xff\xff\xff\xff\xff\xff\x01\x00\x00\x00\x02\x00\x00\x00\x01\x00\xbe\x01\x00\x00\xb0V\xaf\x8a9\xd9\xd7\x01\x00\x00\x00\x00\x00\x00\x00\x00\xff\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00\xff\xff\xff\xff\x80\xee6\x00'
-raw_bytes_readable_text_string = create_readable_enhanced_hex_string(test_data)
-print(f"Raw bytes with readable text embedded:")
-print(raw_bytes_readable_text_string)
+#print("\n\nDemonstration with known OPC UA message:")
+#test_data = b'OPNF\x84\x00\x00\x00\x00\x00\x00\x00/\x00\x00\x00http://opcfoundation.org/UA/SecurityPolicy#None\xff\xff\xff\xff\xff\xff\xff\xff\x01\x00\x00\x00\x02\x00\x00\x00\x01\x00\xbe\x01\x00\x00\xb0V\xaf\x8a9\xd9\xd7\x01\x00\x00\x00\x00\x00\x00\x00\x00\xff\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00\xff\xff\xff\xff\x80\xee6\x00'
+#raw_bytes_readable_text_string = create_readable_enhanced_hex_string(test_data)
+#print(f"Raw bytes with readable text embedded:")
+#print(raw_bytes_readable_text_string)
 
-readable_text, _ = extract_readable_text(test_data)
-print(f"Extracted readable text segments: {readable_text}")
+#readable_text, _ = extract_readable_text(test_data)
+#print(f"Extracted readable text segments: {readable_text}")
