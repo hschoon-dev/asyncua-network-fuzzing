@@ -24,11 +24,15 @@ def save_readable_text_with_raw_bytes(binary_data, filename="opcua_messages.txt"
         # Create the formatted entry
         entry = f"'{first_readable}' : {raw_bytes_str}\n"
         
+        # Get the script's directory and create the file path relative to it
+        script_dir = Path(__file__).parent
+        output_path = script_dir / filename
+        
         # Write to file (append mode)
-        with open(filename, 'a') as f:
+        with open(output_path, 'a') as f:
             f.write(entry)
         
-        print(f"Saved entry to {filename}:")
+        print(f"Saved entry to {output_path}:")
         print(entry)
         return True
     else:
