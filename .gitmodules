@@ -1,3 +1,0 @@
-[submodule "opcua_network_fuzzer"]
-	path = opcua_network_fuzzer
-	url = https://github.com/claroty/opcua_network_fuzzer.git
