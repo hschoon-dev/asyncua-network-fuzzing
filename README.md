@@ -2,7 +2,7 @@
 
 This repository contains a network fuzzer that was originally developed by Claroty for [Pwn2Own 2022](https://www.zerodayinitiative.com/blog/2022/4/14/pwn2own-miami-2022-results) competition to fuzz OPCUA protocol. The [OPC UA](https://opcfoundation.org/about/opc-technologies/opc-ua/) (Open Platform Communications Unified Architecture) protocol is a standard means of data-exchange between industrial sensors and either on-premises servers or cloud management platforms.
 
-This is an extended version with support for asyncua, a Python OPC UA implementation.
+This is an extended version with support for asyncua, a Python OPC UA implementation as well as the OPC UA Servers offered by Siemens within the S7 1200/1500 product family..
 
 The fuzzer is based on the [boofuzz](https://github.com/jtpereyda/boofuzz) framework. For more info about the original implementation check out Claroty Team82 blog [here](https://claroty.com/team82/research/team82-releases-homegrown-opc-ua-network-fuzzer-based-on-boofuzz).
 
@@ -22,7 +22,7 @@ C:/Users/heiko/AppData/Local/Programs/Python/Python311/python.exe C:\Users\heiko
 
 - `target_host_ip` IP of the OPCUA Server
 - `target_host_port` PORT which the OPCUA Server Listens to
-- `target_app_name` The type of the OPCUA Server to be fuzzed, choose from `kepware`, `dotnetstd`, `softing`, `prosys`, `unified`, `ignition`, `s2opc`, `asyncua`
+- `target_app_name` The type of the OPCUA Server to be fuzzed, choose from `kepware`, `dotnetstd`, `softing`, `prosys`, `unified`, `ignition`, `s2opc`, `asyncua`. `siemens_s7`
 - `request_opcua_to_fuzz` The OPCUA Server request type to fuzz, choose from `read_request`, `browse_request`, `browse_next_request`, `create_subscription_request`, `add_nodes_request`, `history_read_request`
 
 ### Results
